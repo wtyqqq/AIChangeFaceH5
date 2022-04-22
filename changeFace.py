@@ -14,6 +14,7 @@ import os
 import sys
 import time
 from argparse import Namespace
+from tkinter import TRUE
 from editings import latent_editor
 import dlib
 import numpy as np
@@ -33,6 +34,7 @@ import streamlit as st
 
 def main():
     st.markdown("# 一键更换表情")
+    ChangefaceInit() # 初始化
     st.sidebar.title("选择模式")
     app_mode = st.sidebar.selectbox("选择模式", ["趣味模式", "手动模式","关于我们"])
     if app_mode == "趣味模式":
@@ -51,23 +53,37 @@ def funnyMode():
     st.markdown("""
     ## 趣味模式
     """)
-    uploadImage()
+    file = uploadImage()
     # 单行文本输入框
     word = st.text_input("选择你想要的效果", "开心")
+    # 这里后面换成单选框，使用字典或者list映射为参数
+
 def advancedMode():
     """
         手动模式，手动指定各种参数
     """
-    uploadImage()
+    file = uploadImage()
     st.markdown("""
     ## 手动模式
     """)
     smile = st.slider("笑容变化程度", min_value=-1, max_value=1)
     age = st.slider("年龄变化程度", min_value=-1, max_value=1)
-    addition = st.selectbox("Which would you like", ["胡子","2", "3"])
-    st.write(addition)
+    #addition = st.selectbox("Which would you like", ["胡子","2", "3"])
+    #st.write(addition)
+    if(st.button("运行！", key="Funny")):
+        if file:
+            #st.write(type(np.asanyarray(bytearray(file.read()), dtype=np.uint8)))
+            bitsFile=file.getvalue()
+            savepath = 'saveFiles/'+file.name
+            with open(savepath,'wb') as f:
+                f.write(bitsFile)
+            st.image(savepath)
+            st.image(ChangeFaceMain(smile,age,savepath))
+        else:
+            st.write("No file input")
 def uploadImage():
     uploaded_file = st.file_uploader("上传你的自拍~", type=['png', 'jpg'] )
+    return uploaded_file
 
 
 ############ChangeFaceCodes###############
@@ -92,11 +108,11 @@ def ChangefaceInit():
     net.cuda()
     
     print('Model successfully loaded!')
-def ChangeFaceMain(simleDegreeInput, ageDegreeInput, additionInput):
+def ChangeFaceMain(simleDegreeInput, ageDegreeInput,inputFilePath):
 # 设置输入图像
     # Setup required image transformations
     EXPERIMENT_ARGS = {
-            "image_path": "test_imgs/example1.png"
+            "image_path": inputFilePath
         }
     EXPERIMENT_ARGS['transform'] = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -161,23 +177,23 @@ def ChangeFaceMain(simleDegreeInput, ageDegreeInput, additionInput):
     result, _ = net.decoder([edit_latents],conditions, input_is_latent=True, randomize_noise=False, return_latents=True)
 
     result = torch.nn.functional.interpolate(result, size=(256,256) , mode='bilinear')
-    display_alongside_source_image(tensor2im(result[0]), input_image)# 这个是显示图片的函数
-    # GANSpace
-    # addition
-    ganspace_pca = torch.load('./editings/ganspace_pca/ffhq_pca.pt') 
-    ganspace_directions = {
-        'eyes':            (54,  7,  8,  20),       # 眼睛    
-        'beard':           (58,  7,  9,  -20),      # 胡子
-        'lip':             (34, 10, 11,  20) }      # 嘴唇
-    edit_direction = ganspace_directions[additionInput]
-    img_edit, edit_latents = editor.apply_ganspace(latent_codes[0].unsqueeze(0).cuda(), ganspace_pca, [edit_direction])
-    # align the distortion map
-    img_edit = torch.nn.functional.interpolate(torch.clamp(img_edit, -1., 1.), size=(256,256) , mode='bilinear')
-    res_align  = net.grid_align(torch.cat((res, img_edit  ), 1))
-    conditions = net.residue(res_align)
-    result, _ = net.decoder([edit_latents],conditions, input_is_latent=True, randomize_noise=False, return_latents=True)
-    result = torch.nn.functional.interpolate(result, size=(256,256) , mode='bilinear')
-    display_alongside_source_image(tensor2im(result[0]), input_image)# 显示addition的图片
+    return display_alongside_source_image(tensor2im(result[0]), input_image)# 这个是显示图片的函数
+    # # GANSpace
+    # # addition
+    # ganspace_pca = torch.load('./editings/ganspace_pca/ffhq_pca.pt') 
+    # ganspace_directions = {
+    #     'eyes':            (54,  7,  8,  20),       # 眼睛    
+    #     'beard':           (58,  7,  9,  -20),      # 胡子
+    #     'lip':             (34, 10, 11,  20) }      # 嘴唇
+    # edit_direction = ganspace_directions[additionInput]
+    # img_edit, edit_latents = editor.apply_ganspace(latent_codes[0].unsqueeze(0).cuda(), ganspace_pca, [edit_direction])
+    # # align the distortion map
+    # img_edit = torch.nn.functional.interpolate(torch.clamp(img_edit, -1., 1.), size=(256,256) , mode='bilinear')
+    # res_align  = net.grid_align(torch.cat((res, img_edit  ), 1))
+    # conditions = net.residue(res_align)
+    # result, _ = net.decoder([edit_latents],conditions, input_is_latent=True, randomize_noise=False, return_latents=True)
+    # result = torch.nn.functional.interpolate(result, size=(256,256) , mode='bilinear')
+    # display_alongside_source_image(tensor2im(result[0]), input_image)# 显示addition的图片
 
 # 图像对齐
 def get_landmark(filepath, predictor):
