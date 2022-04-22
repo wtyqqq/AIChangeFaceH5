@@ -86,9 +86,11 @@ def ChangefaceInit():
     opts['is_train'] = False
     opts['checkpoint_path'] = model_path
     opts= Namespace(**opts)
+    global net 
     net = pSp(opts)
     net.eval()
     net.cuda()
+    
     print('Model successfully loaded!')
 def ChangeFaceMain(simleDegreeInput, ageDegreeInput, additionInput):
 # 设置输入图像
@@ -100,6 +102,7 @@ def ChangeFaceMain(simleDegreeInput, ageDegreeInput, additionInput):
         transforms.Resize((256, 256)),
         transforms.ToTensor(),
         transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
+    global resize_dims
     resize_dims = (256, 256)
 
 
