@@ -55,9 +55,21 @@ def funnyMode():
     """)
     file = uploadImage()
     # 单行文本输入框
-    word = st.text_input("选择你想要的效果", "开心")
+    sel = st.selectbox("选择你想要的效果", ["微笑","伤心", "正常","大笑"])
+    pars = {"微笑": [0.2,0],"伤心":[-0.7,0], "正常":[0,0],"大笑":[1,0]}
     # 这里后面换成单选框，使用字典或者list映射为参数
-
+    if(st.button("运行！", key="Funny")):
+        if file:
+            #st.write(type(np.asanyarray(bytearray(file.read()), dtype=np.uint8)))
+            bitsFile=file.getvalue()
+            savepath = 'saveFiles/'+file.name
+            with open(savepath,'wb') as f:
+                f.write(bitsFile)
+            #st.image(savepath)
+            #st.write(pars[sel][0],pars[sel][1])
+            st.image(ChangeFaceMain(pars[sel][0],pars[sel][1],savepath))
+        else:
+            st.write("No file input")
 def advancedMode():
     """
         手动模式，手动指定各种参数
@@ -66,8 +78,8 @@ def advancedMode():
     st.markdown("""
     ## 手动模式
     """)
-    smile = st.slider("笑容变化程度", min_value=-1, max_value=1)
-    age = st.slider("年龄变化程度", min_value=-1, max_value=1)
+    smile = st.slider("笑容变化程度", min_value=-1, max_value=1,step=0.01)
+    age = st.slider("年龄变化程度", min_value=-1, max_value=1,step=0.01)
     #addition = st.selectbox("Which would you like", ["胡子","2", "3"])
     #st.write(addition)
     if(st.button("运行！", key="Funny")):
@@ -77,7 +89,7 @@ def advancedMode():
             savepath = 'saveFiles/'+file.name
             with open(savepath,'wb') as f:
                 f.write(bitsFile)
-            st.image(savepath)
+            #st.image(savepath)
             st.image(ChangeFaceMain(smile,age,savepath))
         else:
             st.write("No file input")
