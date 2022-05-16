@@ -35,7 +35,8 @@ import streamlit as st
 def main():
     st.markdown("# 一键更换表情")
     st.markdown("## 左边可以更改模式~")
-    #ChangefaceInit() # 初始化
+    # if(st.button("初始化模型", key="init")):
+    #     ChangefaceInit() # 初始化
     st.sidebar.title("选择模式")
     app_mode = st.sidebar.selectbox("选择模式", ["趣味模式", "手动模式","关于我们"])
     if app_mode == "趣味模式":
@@ -57,7 +58,7 @@ def funnyMode():
     file = uploadImage()
     # 单行文本输入框
     sel = st.selectbox("选择你想要的效果", ["微笑","伤心", "正常","大笑"])
-    pars = {"微笑": [0.2,0],"伤心":[-0.7,0], "正常":[0,0],"大笑":[1,0]}
+    pars = {"微笑": [1,0],"伤心":[-1,0], "正常":[0,0],"大笑":[2,0]}
     # 这里后面换成单选框，使用字典或者list映射为参数
     if(st.button("运行！", key="Funny")):
         if file:
@@ -68,7 +69,7 @@ def funnyMode():
                 f.write(bitsFile)
             #st.image(savepath)
             #st.write(pars[sel][0],pars[sel][1])
-            st.image(ChangeFaceMain(pars[sel][0],pars[sel][1],savepath))
+            st.image(ChangeFaceMain(DegreeInput=pars[sel][0],inputFilePath= savepath,mode =1 ,normalMode=1))
         else:
             st.write("No file input")
 def advancedMode():
@@ -80,8 +81,8 @@ def advancedMode():
     ## 手动模式
     """)
     st.markdown("## 简单变化")
-    smile = st.slider("笑容变化程度", min_value=-1.0, max_value=1.0,step=0.01)
-    age = st.slider("年龄变化程度", min_value=-1.0, max_value=1.0,step=0.01)
+    smile = st.slider("笑容变化程度", min_value=-5.0, max_value=5.0,step=0.01)
+    age = st.slider("年龄变化程度", min_value=-5.0, max_value=5.0,step=0.01)
     #addition = st.selectbox("Which would you like", ["胡子","2", "3"])
     #st.write(addition)
     if(st.button("运行笑容变化！", key="Funny")):
@@ -151,7 +152,8 @@ def ChangefaceInit():
     
     print('Model successfully loaded!')
 def ChangeFaceMain(DegreeInput,inputFilePath,mode = 1,normalMode=0,addmode = 1):
-# 设置输入图像
+    ChangefaceInit()
+    # 设置输入图像
     # Setup required image transformations
     EXPERIMENT_ARGS = {
             "image_path": inputFilePath
@@ -202,8 +204,8 @@ def ChangeFaceMain(DegreeInput,inputFilePath,mode = 1,normalMode=0,addmode = 1):
     # Display inversion:
     display_alongside_source_image(tensor2im(result_image[0]), input_image)
     # 图像编辑
+    editor = latent_editor.LatentEditor(net.decoder)
     if mode:
-        editor = latent_editor.LatentEditor(net.decoder)
         normalDic ={0:'age',1:'smile'}
         # interface-GAN
         interfacegan_directions = {
